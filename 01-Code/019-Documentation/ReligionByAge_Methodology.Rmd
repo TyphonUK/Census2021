@@ -4,9 +4,9 @@ date: '`r format(Sys.Date())`'
 title: Census 2021 Analysis
 subtitle: Religion by Age (Methodology)
 output:
-  html_notebook: default
   html_document:
     number_sections: true
+  html_notebook: default
   pdf_document:
     number_sections: true
   word_document:
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Methodology
 
-```{r}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 
 library(tidyverse)
 library(sqldf)
@@ -36,7 +36,7 @@ library(dplyr)
 ```{r}
 
 SourceURL <- "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/culturalidentity/religion/datasets/detailedreligionbyageandsexinenglandandwales/census2021/detailedreligionagesex.xlsx"
-destination <- "02-Data/021-RawData/detailedreligionagesex.xlsx"
+destination <- "C:/Users/typho/OneDrive/Documents/Professional/Analysis Portfilio/2021CensusData/Census2021/02-Data/021-RawData/detailedreligionagesex.xlsx"
 
 download.file(SourceURL, destination, mode="wb")
 
@@ -134,17 +134,18 @@ df4 <- df3 %>%
 ```
 
 ```{r}
+
+library(ggplot2)
+
 ggplot(df4) +
-  aes(x = AgeCat, y = count) +
-  geom_col(fill = "#112446") +
-  labs(
-    x = "Age Category",
-    y = "Count",
-    title = "Religion by Age Category"
-  ) +
-  coord_flip() +
-  theme_minimal() +
-  facet_wrap(vars(Religion)
+ aes(x = AgeCat, y = count) +
+ geom_col(fill = "#B22222") +
+ labs(x = "Age Category", y = "Count", 
+ title = "Religion by Age Category") +
+ coord_flip() +
+ theme_minimal() +
+ facet_wrap(vars(Religion))
+
 ```
 
 
