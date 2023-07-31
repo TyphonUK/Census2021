@@ -1,0 +1,151 @@
+---
+author: TyphonUK
+date: '`r format(Sys.Date())`'
+title: Census 2021 Analysis
+subtitle: Religion by Age (Methodology)
+output:
+  html_notebook: default
+  html_document:
+    number_sections: true
+  pdf_document:
+    number_sections: true
+  word_document:
+    number_sections: true
+  md_document: default
+---
+\newpage
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Introduction
+
+# Methodology
+
+```{r}
+
+library(tidyverse)
+library(sqldf)
+library(magrittr)
+library(readxl)
+library(dplyr)
+
+
+```
+
+
+```{r}
+
+SourceURL <- "https://www.ons.gov.uk/file?uri=/peoplepopulationandcommunity/culturalidentity/religion/datasets/detailedreligionbyageandsexinenglandandwales/census2021/detailedreligionagesex.xlsx"
+destination <- "02-Data/021-RawData/detailedreligionagesex.xlsx"
+
+download.file(SourceURL, destination, mode="wb")
+
+df1 <- read_excel(destination, sheet = "Table 2","A4:BN105")
+
+```
+
+```{r}
+colnames(df1) %<>%
+  str_replace_all("\\s", "") %>%
+  str_replace_all("\\(", "") %>%
+  str_replace_all("\\)", "") %>%
+  str_replace_all("\\:","_") %>%
+  str_replace_all("\\`","_") %>%
+  tolower()
+
+df1$buddhist <- as.numeric(df1$buddhist)
+```
+
+```{r}
+df2 <- sqldf("Select
+                age
+                ,case
+                  When cast(age as int) between 0 and 9 then '01 - Below 10'
+                  when cast(age as int) between 10 and 19 then '02 - 10-19'
+                  when cast(age as int) between 20 and 29 then '03 - 20-29'
+                  when cast(age as int) between 30 and 39 then '04 - 30-39'
+                  when cast(age as int) between 40 and 49 then '05 - 40-49'
+                  when cast(age as int) between 50 and 59 then '06 - 50-59'
+                  when cast(age as int) between 60 and 69 then '07 - 60-69'
+                  when cast(age as int) between 70 and 79 then '08 - 70-79'
+                  when cast(age as int) between 80 and 89 then '09 - 80-89'
+                  when cast(age as int) between 90 and 99 then '10 - 90-99'
+                  when age = '100 and over' then '11 - Over 100'
+                 End as AgeCat
+                ,cast(buddhist as int) as buddhist
+                ,christian
+                ,hindu
+                ,jewish
+                ,muslim
+                ,sikh
+                ,noreligion_agnostic + noreligion_atheist + noreligion_freethinker +
+                  noreligion_humanist + noreligion_noreligion + noreligion_realist 
+                  as none_believer
+                ,otherreligion_alevi + otherreligion_animism + otherreligion_bahai +
+                  otherreligion_believeingod + otherreligion_brahmakumari + otherreligion_chinesereligion +
+                  otherreligion_churchofallreligion + otherreligion_confucianist + otherreligion_deist +
+                  otherreligion_druid + otherreligion_druze + otherreligion_eckankar +
+                  otherreligion_heathen + otherreligion_jain + otherreligion_mixedreligion +
+                  otherreligion_mysticism + otherreligion_nativeamericanchurch + otherreligion_newage +
+                  otherreligion_occult + otherreligion_otherreligions + otherreligion_ownbeliefsystem +
+                  otherreligion_pagan + otherreligion_pantheism + otherreligion_rastafarian +
+                  otherreligion_ravidassia + otherreligion_reconstructionist + otherreligion_satanism +
+                  otherreligion_scientology + otherreligion_shamanism + otherreligion_shintoism +
+                  otherreligion_spiritual + otherreligion_spiritualist + otherreligion_taoist +
+                  otherreligion_theism + otherreligion_thelemite + otherreligion_traditionalafricanreligion +
+                  otherreligion_unificationchurch + otherreligion_universalist + otherreligion_valmiki +
+                  otherreligion_vodun + otherreligion_wicca + otherreligion_witchcraft +
+                  otherreligion_yazidi + otherreligion_zoroastrian
+                  as otherreligions
+                ,notanswered
+              From
+                df1 ")
+
+```
+
+```{r}
+df3 <- sqldf("Select
+                AgeCat
+                ,Sum(buddhist) as buddhist
+                ,Sum(christian) as christian
+                ,Sum(hindu) as hindu
+                ,Sum(jewish) as jewish
+                ,Sum(muslim) as muslim
+                ,Sum(sikh) as sikh
+                ,Sum(none_believer) as none_believer
+                ,Sum(otherreligions) as otherreligions
+                ,Sum(notanswered) as notanswered
+             From
+              df2
+             Group by
+              AgeCat
+             order by
+              AgeCat
+             ")
+```
+
+```{r}
+df4 <- df3 %>%
+    pivot_longer(
+      cols = !AgeCat,
+      names_to = "Religion",
+      values_to = "count"
+    )
+```
+
+```{r}
+ggplot(df4) +
+  aes(x = AgeCat, y = count) +
+  geom_col(fill = "#112446") +
+  labs(
+    x = "Age Category",
+    y = "Count",
+    title = "Religion by Age Category"
+  ) +
+  coord_flip() +
+  theme_minimal() +
+  facet_wrap(vars(Religion)
+```
+
+
+
